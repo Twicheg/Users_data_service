@@ -1,16 +1,72 @@
-# This is a sample Python script.
+from fastapi import Cookie, FastAPI, Header
+from typing import Annotated, Union, Any
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from fastapi import Depends, FastAPI, Response, Form
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
+
+app = FastAPI()
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+class LoginModel(BaseModel):
+    login: str
+    password: str
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+class LogoutModel(BaseModel):
+    login: str
+    password: str
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+@app.post("/login")
+async def login(login: LoginModel):
+    return Response(False)
+
+
+@app.get("/logout", response_model={})
+async def logout():
+    return Response(status_code=200)
+
+
+@app.get("/users/current")
+async def current_user(current: int):
+    pass
+
+
+@app.patch("/users/current")
+async def edit_user():
+    pass
+
+
+@app.get("/users")
+async def users():
+    pass
+
+
+@app.get("private/users")
+async def private_users():
+    pass
+
+
+@app.post("private/users")
+async def private_create_user():
+    pass
+
+
+@app.get("/private/users/{pk}")
+async def private_get_user(pk: int):
+    pass
+
+
+@app.delete("/private/users/{pk}")
+async def private_get_user(pk: int):
+    pass
+
+
+@app.patch("/private/users/{pk}")
+async def private_get_user(pk: int):
+    pass
+
+
+
