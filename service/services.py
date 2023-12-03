@@ -17,14 +17,20 @@ ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 
-def token_generator(username, password):
+def token_generator(email, password):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    data = {"sub": username}
+    data = {"sub": email}
     expire = datetime.utcnow() + access_token_expires
     to_encode = data.copy()
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+async def get_current_user(JWT, db):
+    user = jwt.decode(JWT, key=SECRET_KEY)
+    user = db.query(User).filter(User.email == user.get("sub")).first()
+    return user
 
 
 def get_db():
@@ -86,4 +92,4 @@ class MyOAuth2PasswordBearer(OAuth2PasswordBearer):
         return param
 
 
-oauth2_scheme = MyOAuth2PasswordBearer(tokenUrl="Token")
+my_oauth2_scheme = MyOAuth2PasswordBearer(tokenUrl="Token")

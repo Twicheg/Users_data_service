@@ -1,18 +1,13 @@
-from typing import Union
-
-from pydantic_core._pydantic_core import ValidationError
 from typing_extensions import Annotated
 from fastapi import FastAPI, Response, Depends
 from fastapi.encoders import jsonable_encoder
 from service.database import SessionLocal
-from service.schemas import LoginModel, PrivateCreateUserModel
+from service.schemas import LoginModel, PrivateCreate, CurrentUser
 from service.services import get_db, check_email, password_hash, check_email_with_password, ACCESS_TOKEN_EXPIRE_MINUTES, \
-    token_generator, MyOAuth2PasswordRequestForm
+    token_generator, MyOAuth2PasswordRequestForm, get_current_user
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.param_functions import Form
 
-from service.services import oauth2_scheme
+from service.services import my_oauth2_scheme
 from service.users import User
 
 app = FastAPI()
@@ -36,16 +31,16 @@ async def login(response: Response, db: SessionLocal = Depends(get_db),
 @app.get("/logout",
          tags=['auth'],
          summary='Вход в систему')
-async def logout(response: Response, current_user: Annotated[str, Depends(oauth2_scheme)]):
+async def logout(response: Response, current_user: Annotated[str, Depends(my_oauth2_scheme)]):
     print(current_user)
     response.delete_cookie(key="Bearer")
     return {"msg": "Successfully logout"}
 
 
-@app.get("/users/current")
-async def current_user(current_user: Annotated[str, Depends(oauth2_scheme)]):
-    print(current_user)
-    return {1: 1}
+@app.get("/users/current", response_model=CurrentUser)
+async def current_user(JWT: Annotated[str, Depends(my_oauth2_scheme)], db: SessionLocal = Depends(get_db)):
+    user_from_db = await get_current_user(JWT, db)
+    return user_from_db
 
 
 @app.patch("/users/current")
@@ -63,8 +58,8 @@ async def private_users():
     pass
 
 
-@app.post("/private/users", tags=["admin"], response_model=PrivateCreateUserModel)
-async def private_create_user(user: PrivateCreateUserModel, db: SessionLocal = Depends(get_db)):
+@app.post("/private/users", tags=["admin"], response_model=PrivateCreate)
+async def private_create_user(user: PrivateCreate, db: SessionLocal = Depends(get_db)):
     user_dict = user.dict()
     check_email(user_dict, db=db)
     password = user_dict.pop('password')

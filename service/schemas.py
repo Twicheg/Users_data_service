@@ -4,7 +4,7 @@ from typing import Union
 from pydantic import BaseModel
 
 
-class CurrentUserResponseModel(BaseModel):
+class CurrentUser(BaseModel):
     first_name: str
     last_name: str
     other_name: str | None
@@ -17,7 +17,7 @@ class CurrentUserResponseModel(BaseModel):
         orm_mode = True
 
 
-class PrivateCreateUserModel(BaseModel):
+class PrivateCreate(BaseModel):
     first_name: str
     last_name: str
     email: str
@@ -35,3 +35,4 @@ class UserUpdate(BaseModel):
 class LoginModel(BaseModel):
     email: str
     hashed_password: str
+
