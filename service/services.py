@@ -8,6 +8,9 @@ from service.database import SessionLocal
 from fastapi import Response, HTTPException
 from passlib.context import CryptContext
 from service.users import User
+from starlette.requests import Request
+from fastapi.security.utils import get_authorization_scheme_param
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
@@ -46,29 +49,20 @@ def check_email_with_password(user, db):
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     for i in db.query(User).all():
         if user.username == i.email and pwd_context.verify(user.password, i.hashed_password):
-            print('find user')
-        else:
-            HTTPException(status_code=401, detail="Bad username or password")
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Cookie")
+            return 0
+    raise HTTPException(status_code=401, detail="Bad username or password")
 
 
 class MyOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
     def __init__(
             self,
-            email: Annotated[str, Form()],
-            password: Annotated[str, Form()],
+            email: Annotated[str, Form()] = None,
+            password: Annotated[str, Form()] = None,
     ):
         super().__init__(
             username=email,
             password=password,
         )
-
-
-from starlette.requests import Request
-from fastapi.security.utils import get_authorization_scheme_param
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 
 class MyOAuth2PasswordBearer(OAuth2PasswordBearer):
