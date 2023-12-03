@@ -1,13 +1,17 @@
+from pydantic_core._pydantic_core import ValidationError
 from typing_extensions import Annotated
-
-from fastapi import FastAPI, Response ,Depends
+from fastapi import FastAPI, Response, Depends
 from fastapi.encoders import jsonable_encoder
-from schemas import LoginModel
+
+from service.schemas import LoginModel, PrivateCreateUserModel
 
 app = FastAPI()
 
+
 async def common_parameters(q: str | None = None, skip: int = 0, limit: int = 100):
     return {"q": q, "skip": skip, "limit": limit}
+
+
 CommonsDep = Annotated[dict, Depends(common_parameters)]
 
 @app.get("/userss/")
@@ -21,10 +25,8 @@ async def read_users(commons: CommonsDep):
           summary='Вход в систему'
           )
 async def login(item: LoginModel):
-    print(item.login)
     update_data = item.dict(exclude_unset=True)
-    print(update_data)
-    #updated_item = stored_item_model.copy(update=update_data) Using Pydantic's update
+    # updated_item = stored_item_model.copy(update=update_data) Using Pydantic's update
 
     return jsonable_encoder(login)
 
@@ -59,7 +61,8 @@ async def private_users():
 
 
 @app.post("private/users")
-async def private_create_user():
+async def private_create_user(user: PrivateCreateUserModel):
+    print(user)
     pass
 
 
