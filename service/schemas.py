@@ -1,23 +1,23 @@
 from datetime import datetime
+from typing import Union
 
 from pydantic import BaseModel
-from fastapi_users import schemas
 
 
-class CurrentUserResponseModel(schemas.BaseUser[int]):
+class CurrentUserResponseModel(BaseModel):
     first_name: str
     last_name: str
-    other_name: str|None
+    other_name: str | None
     email: str
-    phone: str|None
-    birthday: datetime|None
+    phone: str | None
+    birthday: datetime | None
     is_admin: bool
 
     class Config:
         orm_mode = True
 
 
-class PrivateCreateUserModel(schemas.BaseUserCreate):
+class PrivateCreateUserModel(BaseModel):
     first_name: str
     last_name: str
     email: str
@@ -28,10 +28,10 @@ class PrivateCreateUserModel(schemas.BaseUserCreate):
         orm_mode = True
 
 
-class UserUpdate(schemas.BaseUserUpdate):
+class UserUpdate(BaseModel):
     pass
 
 
 class LoginModel(BaseModel):
-    login: str
-    password: str
+    email: str
+    hashed_password: str
