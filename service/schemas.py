@@ -28,6 +28,16 @@ class PrivateCreate(BaseModel):
         orm_mode = True
 
 
+class AfterCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    password: str
+    is_admin: bool
+
+    class Config:
+        orm_mode = True
+
 class UserUpdate(BaseModel):
     pass
 

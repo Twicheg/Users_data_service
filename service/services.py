@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union, cast, Annotated
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+from jose import jwt
 from fastapi.param_functions import Form
 from service.database import SessionLocal
 from fastapi import Response, HTTPException
@@ -19,7 +19,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 def token_generator(email, password):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    data = {"sub": email}
+    data = {"sub": email, "pas": password}
     expire = datetime.utcnow() + access_token_expires
     to_encode = data.copy()
     to_encode.update({"exp": expire})
@@ -42,6 +42,14 @@ def get_db():
 
 
 def check_email(user, db):
+    if {"@", "."} not in set(user):
+        raise HTTPException(status_code=400, detail="Enter valid email")
+    if 'mail' not in user:
+        raise HTTPException(status_code=400, detail="Enter valid email")
+    if '.com' not in user or '.ru' not in user:
+        raise HTTPException(status_code=400, detail="Enter valid email")
+    if user.find("@") < 4:
+        raise HTTPException(status_code=400, detail="Enter valid email")
     if user.get("email") in [i.email for i in db.query(User).all()]:
         raise HTTPException(status_code=400, detail="Email already used")
 
