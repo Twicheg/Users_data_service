@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi.exceptions import HTTPException
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 from typing_extensions import Annotated
@@ -6,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from service.database import SessionLocal
 from service.schemas import LoginModel, PrivateCreate, CurrentUser, AfterCreate
 from service.services import get_db, check_email, password_hash, check_email_with_password, \
-    token_generator, get_current_user
+    token_generator, get_current_user, get_arg
 from fastapi.responses import JSONResponse, RedirectResponse
 from service.services import my_oauth2_scheme
 from service.users import User
@@ -30,8 +32,8 @@ async def login(response: Response, user: LoginModel, db: SessionLocal = Depends
 @app.get("/logout",
          tags=['auth'],
          summary='Выход из системы')
-async def logout(response: Response, current_user: Annotated[str, Depends(my_oauth2_scheme)]):
-    response.delete_cookie(key="Bearer")
+async def logout(commons: Annotated[Any, Depends(get_arg)]):
+    commons.get("response").delete_cookie(key="Bearer")
     return {"msg": "Successfully logout"}
 
 
@@ -43,9 +45,9 @@ async def logout(response: Response, current_user: Annotated[str, Depends(my_oau
              401:{"model":CurrentUser}
          }
          )
-async def current_user(JWT: Annotated[str, Depends(my_oauth2_scheme)], db: SessionLocal = Depends(get_db)):
+async def current_user(commons: Annotated[Any, Depends(get_arg)]):
     try:
-        user_from_db = await get_current_user(JWT, db)
+        user_from_db = await get_current_user(commons.get("user_JWT"), commons.get("db"))
     except Exception as e:
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Session over , please re-login")
     return user_from_db
@@ -58,13 +60,16 @@ async def edit_user():
 
 
 @app.get("/users",
-         tags=['user'])
-async def users():
+         tags=['user'],
+         )
+async def users(commons: Annotated[Any, Depends(get_arg)]):
     pass
 
 
+
 @app.get("/private/users",
-         tags=['admin'])
+         tags=['admin'],
+         )
 async def private_users():
     pass
 

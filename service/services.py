@@ -5,16 +5,17 @@ from service.manager import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt
 from fastapi.param_functions import Form
 from service.database import SessionLocal
-from fastapi import Response, HTTPException
+from fastapi import Response, HTTPException, FastAPI, Response, Depends, Header, Request
 from passlib.context import CryptContext
 from service.users import User
 from starlette.requests import Request
 from fastapi.security.utils import get_authorization_scheme_param
-from starlette.status import HTTP_401_UNAUTHORIZED,HTTP_403_FORBIDDEN
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES"))
+my_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Token")
 
 
 def token_generator(email, password):
@@ -66,7 +67,6 @@ def check_email_with_password(user, db):
     raise HTTPException(status_code=401, detail="Bad username or password")
 
 
-
 class MyOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
     def __init__(
             self,
@@ -78,6 +78,10 @@ class MyOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
             password=password,
         )
 
+
+async def get_arg(response: Response = None,  request: Request = None,db: SessionLocal = Depends(get_db),
+                  JWT: Annotated[str, Depends(my_oauth2_scheme)] = None ):
+    return {"response": response, "db": db, "request": request, "user_JWT": JWT}
 
 #
 #
@@ -100,6 +104,3 @@ class MyOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
 #             else:
 #                 return None
 #         return param
-
-
-my_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Token")
