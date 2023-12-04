@@ -1,12 +1,13 @@
+from fastapi.exceptions import HTTPException
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 from typing_extensions import Annotated
-from fastapi import FastAPI, Response, Depends
+from fastapi import FastAPI, Response, Depends, Header, Request
 from fastapi.encoders import jsonable_encoder
 from service.database import SessionLocal
 from service.schemas import LoginModel, PrivateCreate, CurrentUser, AfterCreate
-from service.services import get_db, check_email, password_hash, check_email_with_password, ACCESS_TOKEN_EXPIRE_MINUTES, \
-    token_generator, MyOAuth2PasswordRequestForm, get_current_user
+from service.services import get_db, check_email, password_hash, check_email_with_password, \
+    token_generator, get_current_user
 from fastapi.responses import JSONResponse, RedirectResponse
-
 from service.services import my_oauth2_scheme
 from service.users import User
 
@@ -18,29 +19,35 @@ app = FastAPI()
           description="После успешного входа в систему необходимо установить Cookies для пользователя",
           summary='Вход в систему'
           )
-async def login(response: Response, db: SessionLocal = Depends(get_db),
-                request_form: MyOAuth2PasswordRequestForm = Depends()):
-    check_email_with_password(request_form, db)
+async def login(response: Response, user: LoginModel, db: SessionLocal = Depends(get_db), ):
+    check_email_with_password(user, db)
     response.set_cookie(key="Bearer",
-                        value=f"{token_generator(request_form.username,request_form.password)}",
+                        value=f"{token_generator(user.email, user.password)}",
                         httponly=True)
     return {"msg": "Successfully login"}
 
 
 @app.get("/logout",
          tags=['auth'],
-         summary='Вход в систему')
+         summary='Выход из системы')
 async def logout(response: Response, current_user: Annotated[str, Depends(my_oauth2_scheme)]):
-    print(current_user)
     response.delete_cookie(key="Bearer")
     return {"msg": "Successfully logout"}
 
 
 @app.get("/users/current",
          tags=['user'],
-         response_model=CurrentUser)
+         response_model=CurrentUser,
+         responses={
+             403:{"model":CurrentUser},
+             401:{"model":CurrentUser}
+         }
+         )
 async def current_user(JWT: Annotated[str, Depends(my_oauth2_scheme)], db: SessionLocal = Depends(get_db)):
-    user_from_db = await get_current_user(JWT, db)
+    try:
+        user_from_db = await get_current_user(JWT, db)
+    except Exception as e:
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Session over , please re-login")
     return user_from_db
 
 

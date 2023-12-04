@@ -32,7 +32,6 @@ class AfterCreate(BaseModel):
     first_name: str
     last_name: str
     email: str
-    password: str
     is_admin: bool
 
     class Config:
@@ -44,5 +43,5 @@ class UserUpdate(BaseModel):
 
 class LoginModel(BaseModel):
     email: str
-    hashed_password: str
+    password: str
 
