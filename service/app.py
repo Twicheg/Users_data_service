@@ -7,8 +7,8 @@ from service.database import SessionLocal
 from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserResponseModel, \
     PrivateDetailUserResponseModel, ErrorResponseModel, \
     CodelessErrorResponseModel
-from service.services import get_db, check_email, password_hash, check_email_with_password, \
-    token_generator, get_current_user, get_arg
+from service.services import get_db, user_create_validation, password_hash, check_email_with_password, \
+    token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user
 from fastapi.responses import JSONResponse, RedirectResponse
 from service.users import User
 
@@ -21,11 +21,13 @@ app = FastAPI()
           response_model=CurrentUserResponseModel,
           )
 async def login(response: Response, user: LoginModel, db: SessionLocal = Depends(get_db)):
-    check_email_with_password(user, db)
+    email = user.email
+    password = user.password
+    check_email_with_password(email, password, db)
     response.set_cookie(key="Bearer",
-                        value=f"{token_generator(user.email, user.password)}",
+                        value=f"{token_generator(email, password)}",
                         httponly=True)
-    user_from_db = await get_current_user(user.dict(), db)
+    user_from_db = get_current_user(email, db)
     return user_from_db
 
 
@@ -46,10 +48,7 @@ async def logout(commons: Annotated[Any, Depends(get_arg)]):
          },
          )
 async def current_user(commons: Annotated[Any, Depends(get_arg)]):
-    try:
-        user_from_db = await get_current_user(commons.get("user_JWT"), commons.get("db"))
-    except Exception:
-        raise HTTPException(status_code=404, detail="Session over , please re-login")
+    user_from_db = get_current_user(commons.get("current_user_email"), commons.get("db"))
     return user_from_db
 
 
@@ -73,9 +72,6 @@ async def private_users():
     pass
 
 
-from fastapi.encoders import jsonable_encoder
-
-
 @app.post("/private/users",
           tags=['admin'],
           response_model=PrivateDetailUserResponseModel,
@@ -87,12 +83,10 @@ from fastapi.encoders import jsonable_encoder
 async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[Any, Depends(get_arg)]):
     user_dict = user.dict()
     db = commons.get("db")
-    perm = await get_current_user(commons.get("user_JWT"), db)
-    if not perm.is_admin:
-        raise HTTPException(status_code=403, detail="Forbidden")
+    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    user_create_validation(user_dict, db)
+    user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
-    await check_email(user_dict, db)
-    user_dict['hashed_password'] = password_hash(user_dict.pop('password'))
     user = User(**user_dict)
     db.add(user)
     db.commit()
@@ -104,14 +98,20 @@ async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[A
 @app.get("/private/users/{pk}",
          tags=['admin'],
          )
-async def private_get_user(pk: int):
-    pass
+async def private_get_user(pk: int, commons: Annotated[Any, Depends(get_arg)]):
+    db = commons.get("db")
+    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    return get_user(pk, db)
 
 
 @app.delete("/private/users/{pk}",
             tags=['admin'])
-async def private_delete_user(pk: int):
-    pass
+async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)]):
+    db = commons.get("db")
+    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    db.delete(get_user(pk, db))
+    db.commit()
+    return {"msg": "Successfully delete"}
 
 
 @app.patch("/private/users/{pk}",

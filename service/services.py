@@ -28,7 +28,7 @@ def token_generator(email, password):
     return encoded_jwt
 
 
-def get_db():
+def get_db() -> SessionLocal:
     db = SessionLocal()
     try:
         yield db
@@ -36,45 +36,52 @@ def get_db():
         db.close()
 
 
-async def get_arg(response: Response = None, request: Request = None, db: SessionLocal = Depends(get_db),
-                  JWT: Annotated[str, Depends(my_oauth2_scheme)] = None):
-    return {"response": response, "db": db, "request": request, "user_JWT": JWT}
+def get_arg(response: Response = None, request: Request = None, db: SessionLocal = Depends(get_db),
+            JWT: Annotated[str, Depends(my_oauth2_scheme)] = None) -> dict:
+    try:
+        user_email = jwt.decode(JWT, key=SECRET_KEY).get("sub")
+    except Exception:
+        raise HTTPException(status_code=404, detail="Session over , please re-login")
+    return {"response": response, "db": db, "request": request, "current_user_email": user_email}
 
 
-async def get_current_user(User_or_JWT: dict or str, db) -> User:
-    match type(User_or_JWT).__name__:
-        case str.__name__:
-            user = jwt.decode(User_or_JWT, key=SECRET_KEY)
-            user = db.query(User).filter(User.email == user.get("sub")).first()
-            return user
-        case dict.__name__:
-            user = db.query(User).filter(User.email == User_or_JWT.get("email")).first()
-            return user
+def get_current_user(user_email: str, db: SessionLocal, check_perm: bool = False) -> User:
+    user = db.query(User).filter(User.email == user_email).first()
+    if check_perm and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return user
 
 
-async def check_email(user, db):
-    email = user.get("email")
+def get_user(user_id: int, db: SessionLocal) -> User:
+    user = db.query(User).get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
+    return user
+
+
+def user_create_validation(user_dict: dict, db: SessionLocal) -> None:
+    password = user_dict.get("password")
+    email = user_dict.get("email")
+    if len(password) < 5:
+        raise HTTPException(status_code=400, detail="Enter valid password")
     if len({"@", "."}.intersection(set(email))) < 2:
         raise HTTPException(status_code=400, detail="Enter valid email")
     if 'mail' not in email:
         raise HTTPException(status_code=400, detail="Enter valid email")
     if email.find("@") < 4:
         raise HTTPException(status_code=400, detail="Enter valid email")
-    if user.get("email") in [i.email for i in db.query(User).all()]:
+    if email in [i.email for i in db.query(User).all()]:
         raise HTTPException(status_code=400, detail="Email already used")
 
 
-async def password_hash(password):
+async def password_hash(password: str) -> str:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     return pwd_context.hash(password)
 
 
-async def check_email_with_password(user, db: SessionLocal = Depends(get_db)):
+def check_email_with_password(email: str, password: str, db: SessionLocal) -> None:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     for i in db.query(User).all():
-        if user.email == i.email and pwd_context.verify(user.password, i.hashed_password):
+        if email == i.email and pwd_context.verify(password, i.hashed_password):
             return 0
     raise HTTPException(status_code=401, detail="Bad username or password")
-
-
-
