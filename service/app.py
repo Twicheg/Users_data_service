@@ -1,16 +1,15 @@
 from typing import Any
-
-from fastapi.exceptions import HTTPException
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
+# from fastapi.exceptions import HTTPException, RequestErrorModel
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from typing_extensions import Annotated
-from fastapi import FastAPI, Response, Depends, Header, Request
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, Response, Depends, Header, Request, HTTPException
 from service.database import SessionLocal
-from service.schemas import LoginModel, PrivateCreate, CurrentUser, AfterCreate
+from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserResponseModel, \
+    PrivateDetailUserResponseModel, ErrorResponseModel, \
+    CodelessErrorResponseModel
 from service.services import get_db, check_email, password_hash, check_email_with_password, \
     token_generator, get_current_user, get_arg
 from fastapi.responses import JSONResponse, RedirectResponse
-from service.services import my_oauth2_scheme
 from service.users import User
 
 app = FastAPI()
@@ -18,15 +17,16 @@ app = FastAPI()
 
 @app.post("/login",
           tags=["auth"],
-          description="После успешного входа в систему необходимо установить Cookies для пользователя",
-          summary='Вход в систему'
+          summary='Вход в систему',
+          response_model=CurrentUserResponseModel,
           )
-async def login(response: Response, user: LoginModel, db: SessionLocal = Depends(get_db), ):
+async def login(response: Response, user: LoginModel, db: SessionLocal = Depends(get_db)):
     check_email_with_password(user, db)
     response.set_cookie(key="Bearer",
                         value=f"{token_generator(user.email, user.password)}",
                         httponly=True)
-    return {"msg": "Successfully login"}
+    user_from_db = await get_current_user(user.dict(), db)
+    return user_from_db
 
 
 @app.get("/logout",
@@ -39,23 +39,23 @@ async def logout(commons: Annotated[Any, Depends(get_arg)]):
 
 @app.get("/users/current",
          tags=['user'],
-         response_model=CurrentUser,
+         response_model=CurrentUserResponseModel,
          responses={
-             403:{"model":CurrentUser},
-             401:{"model":CurrentUser}
-         }
+             401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
+             400: {"model": ErrorResponseModel, "description": "Bad Request"}
+         },
          )
 async def current_user(commons: Annotated[Any, Depends(get_arg)]):
     try:
         user_from_db = await get_current_user(commons.get("user_JWT"), commons.get("db"))
-    except Exception as e:
-        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Session over , please re-login")
+    except Exception:
+        raise HTTPException(status_code=404, detail="Session over , please re-login")
     return user_from_db
 
 
 @app.patch("/users/current",
            tags=['user'])
-async def edit_user():
+async def edit_user(commons: Annotated[Any, Depends(get_arg)]):
     pass
 
 
@@ -66,7 +66,6 @@ async def users(commons: Annotated[Any, Depends(get_arg)]):
     pass
 
 
-
 @app.get("/private/users",
          tags=['admin'],
          )
@@ -74,17 +73,31 @@ async def private_users():
     pass
 
 
+from fastapi.encoders import jsonable_encoder
+
+
 @app.post("/private/users",
           tags=['admin'],
-          response_model=AfterCreate)
-async def private_create_user(user: PrivateCreate, db: SessionLocal = Depends(get_db)):
+          response_model=PrivateDetailUserResponseModel,
+          responses={
+              400: {"model": ErrorResponseModel, "description": "Bad Request"},
+              401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
+              403: {"model": CodelessErrorResponseModel, "description": "Forbidden"},
+          })
+async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[Any, Depends(get_arg)]):
     user_dict = user.dict()
-    check_email(user_dict, db=db)
-    password = user_dict.pop('password')
-    user_dict['hashed_password'] = password_hash(password)
+    db = commons.get("db")
+    perm = await get_current_user(commons.get("user_JWT"), db)
+    if not perm.is_admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    response = commons.get("response")
+    await check_email(user_dict, db)
+    user_dict['hashed_password'] = password_hash(user_dict.pop('password'))
     user = User(**user_dict)
-    db.add(User(**user_dict))
+    db.add(user)
     db.commit()
+    user = db.query(User).filter(User.email == user_dict.get("email")).first()
+    response.status_code = 201
     return user
 
 
