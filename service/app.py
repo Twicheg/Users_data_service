@@ -10,7 +10,7 @@ from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserRespo
 from service.services import get_db, user_create_validation, password_hash, check_email_with_password, \
     token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user, paginator
 from fastapi.responses import JSONResponse, RedirectResponse
-from service.users import User, City
+from service.models import User, City
 
 app = FastAPI()
 
@@ -75,7 +75,7 @@ async def users(commons: Annotated[Any, Depends(get_arg)],
 
 @app.get("/private/users",
          tags=['admin'],
-         # response_model=list[PrivateUsersListResponseModel],
+         #response_model=list[PrivateUsersListResponseModel],
          responses={
              400: {"model": ErrorResponseModel, "description": "Bad Request"},
              401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},

@@ -7,7 +7,7 @@ from fastapi.param_functions import Form
 from service.database import SessionLocal
 from fastapi import Response, HTTPException, FastAPI, Response, Depends, Header, Request
 from passlib.context import CryptContext
-from service.users import User
+from service.models import User, City
 from starlette.requests import Request
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN

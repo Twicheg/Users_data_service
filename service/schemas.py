@@ -23,6 +23,7 @@ class PrivateCreateUserModel(BaseModel):
     email: str
     password: str
     is_admin: bool
+    city: int
 
     class Config:
         orm_mode = True
@@ -36,7 +37,7 @@ class PrivateDetailUserResponseModel(BaseModel):
     email: str
     phone: str | None
     birthday: datetime | None
-    city: str | None
+    city: int | None
     additional_info: str | None
     is_admin: bool
 
@@ -62,16 +63,17 @@ class PaginatedMetaDataModel(BaseModel):
     total: int
     page: int
     size: int
+
+
 #
 
 class CitiesHintModel(BaseModel):
-
     name: str
 
 
 class PrivateUsersListHintMetaModel(BaseModel):
     pass
-    #city: CitiesHintModel
+    # city: CitiesHintModel
 
 
 class PrivateUsersListMetaDataModel(BaseModel):
@@ -80,7 +82,7 @@ class PrivateUsersListMetaDataModel(BaseModel):
 
 
 class PrivateUsersListResponseModel(BaseModel):
-    #data: {UsersListElementModel}
+    # data: {UsersListElementModel}
     meta: PrivateUsersListMetaDataModel
 
 
