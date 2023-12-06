@@ -18,7 +18,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES"))
 my_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Token")
 
 
-def token_generator(email, password):
+def token_generator(email: str, password: str) -> str:
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     data = {"sub": email, "pas": password}
     expire = datetime.utcnow().replace(tzinfo=None) + access_token_expires
@@ -85,3 +85,10 @@ def check_email_with_password(email: str, password: str, db: SessionLocal) -> No
         if email == i.email and pwd_context.verify(password, i.hashed_password):
             return 0
     raise HTTPException(status_code=401, detail="Bad username or password")
+
+
+def paginator(page, size, db):
+    page -= 1
+    query = db.query(User).all()
+    list_to_return = [i for i in query[page * size:page * size + size]]
+    return list_to_return
