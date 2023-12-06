@@ -1,7 +1,15 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base, as_declarative
 
-from service.database import Base
+Base = declarative_base()
+
+
+class City(Base):
+    __tablename__ = "city"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
 
 
 class User(Base):
@@ -16,7 +24,7 @@ class User(Base):
     )
     phone = Column(String, nullable=True)
     birthday = Column(DateTime, nullable=True)
-    city = Column(String, nullable=True)
+    city = Column(Integer, ForeignKey(City.id))
     additional_info = Column(Text, nullable=True)
     is_admin = Column(Boolean, nullable=False)
     hashed_password: Mapped[str] = mapped_column(

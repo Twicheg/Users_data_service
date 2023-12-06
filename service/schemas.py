@@ -44,6 +44,46 @@ class PrivateDetailUserResponseModel(BaseModel):
         orm_mode = True
 
 
+class UsersListResponseModel(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+
+
+class UsersListElementModel(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+
+
+class PaginatedMetaDataModel(BaseModel):
+    total: int
+    page: int
+    size: int
+#
+
+class CitiesHintModel(BaseModel):
+
+    name: str
+
+
+class PrivateUsersListHintMetaModel(BaseModel):
+    pass
+    #city: CitiesHintModel
+
+
+class PrivateUsersListMetaDataModel(BaseModel):
+    pagination: PaginatedMetaDataModel
+    hint: PrivateUsersListHintMetaModel
+
+
+class PrivateUsersListResponseModel(BaseModel):
+    #data: {UsersListElementModel}
+    meta: PrivateUsersListMetaDataModel
+
+
 class UserUpdate(BaseModel):
     pass
 

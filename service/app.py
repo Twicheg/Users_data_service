@@ -6,11 +6,11 @@ from fastapi import FastAPI, Response, Depends, Header, Request, HTTPException, 
 from service.database import SessionLocal
 from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserResponseModel, \
     PrivateDetailUserResponseModel, ErrorResponseModel, \
-    CodelessErrorResponseModel, UsersListResponseModel, PrivateUsersListResponseModel
+    CodelessErrorResponseModel, UsersListResponseModel, PrivateUsersListResponseModel, CitiesHintModel
 from service.services import get_db, user_create_validation, password_hash, check_email_with_password, \
     token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user, paginator
 from fastapi.responses import JSONResponse, RedirectResponse
-from service.users import User
+from service.users import User, City
 
 app = FastAPI()
 
@@ -75,7 +75,7 @@ async def users(commons: Annotated[Any, Depends(get_arg)],
 
 @app.get("/private/users",
          tags=['admin'],
-         response_model=list[PrivateUsersListResponseModel],
+         # response_model=list[PrivateUsersListResponseModel],
          responses={
              400: {"model": ErrorResponseModel, "description": "Bad Request"},
              401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
@@ -85,7 +85,7 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
                         page: int = Query(ge=1, default=1, title="Page"),
                         size: int = Query(ge=1, le=100, title="Size")):
     query = paginator(page, size, commons.get("db"))
-    return query
+    return {}
 
 
 @app.post("/private/users",
@@ -135,3 +135,10 @@ async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)]
            )
 async def private_patch_user(pk: int, changes):
     pass
+
+
+@app.post("/city")
+def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db)):
+    city = City(**city.dict())
+    db.add(city)
+    db.commit()
