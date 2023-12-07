@@ -2,8 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 
 env_path = '.env'
 load_dotenv(dotenv_path=env_path)

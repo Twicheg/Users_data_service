@@ -131,8 +131,8 @@ class UserUpdate(MyBaseModel):
     last_name: str
     other_name: str
     email: str
-    phone: str
-    birthday: datetime | None
+    phone: str | None = None
+    birthday: datetime | None = None
 
 
 class UpdateUserResponseModel(MyBaseModel):
