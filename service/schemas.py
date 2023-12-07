@@ -1,7 +1,11 @@
 from datetime import datetime
 from typing import Union, Any
-
-from pydantic import BaseModel, validator
+from fastapi import Response, HTTPException, Depends
+from pydantic import BaseModel, validator, root_validator
+from typing_extensions import Annotated
+from service.database import SessionLocal
+from service.models import User
+from service.services import get_db, get_arg
 
 
 class CurrentUserResponseModel(BaseModel):
@@ -12,6 +16,8 @@ class CurrentUserResponseModel(BaseModel):
     phone: str | None
     birthday: datetime | None
     is_admin: bool
+    city: int | None
+    additional_info: str | None
 
     class Config:
         orm_mode = True
@@ -24,6 +30,24 @@ class PrivateCreateUserModel(BaseModel):
     password: str
     is_admin: bool
     city: int
+
+    @validator("email")
+    def first_name(cls, email):
+        if len({"@", "."}.intersection(set(email))) < 2:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if 'mail' not in email:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if email.find("@") < 4:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if email in [i.email for i in next(get_db()).query(User).all()]:
+            raise HTTPException(status_code=400, detail="Email already used")
+        return email
+
+    @validator("password")
+    def password(cls, password):
+        if len(password) < 5:
+            raise HTTPException(status_code=400, detail="Enter valid password")
+        return password
 
     class Config:
         orm_mode = True

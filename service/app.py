@@ -8,7 +8,7 @@ from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserRespo
     PrivateDetailUserResponseModel, ErrorResponseModel, \
     CodelessErrorResponseModel, UsersListResponseModel, PrivateUsersListResponseModel, CitiesHintModel, \
     UsersListElementModel
-from service.services import get_db, user_create_validation, password_hash, check_email_with_password, \
+from service.services import get_db, password_hash, check_email_with_password, \
     token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user, paginator
 from fastapi.responses import JSONResponse, RedirectResponse
 from service.models import User, City
@@ -85,7 +85,7 @@ async def users(commons: Annotated[Any, Depends(get_arg)],
 async def private_users(commons: Annotated[Any, Depends(get_arg)],
                         page: int = Query(ge=1, default=1, title="Page"),
                         size: int = Query(ge=1, le=100, title="Size"), ):
-    query = paginator(page, size, commons.get("db"), convert_to_private_users=True)
+    query = await paginator(page, size, commons.get("db"), convert_to_private_users=True)
     return query
 
 
@@ -101,7 +101,6 @@ async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[A
     user_dict = user.dict()
     db = commons.get("db")
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
-    user_create_validation(user_dict, db)
     user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
     user = User(**user_dict)

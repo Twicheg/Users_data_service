@@ -59,21 +59,6 @@ def get_user(user_id: int, db: SessionLocal) -> User:
     return user
 
 
-def user_create_validation(user_dict: dict, db: SessionLocal) -> None:
-    password = user_dict.get("password")
-    email = user_dict.get("email")
-    if len(password) < 5:
-        raise HTTPException(status_code=400, detail="Enter valid password")
-    if len({"@", "."}.intersection(set(email))) < 2:
-        raise HTTPException(status_code=400, detail="Enter valid email")
-    if 'mail' not in email:
-        raise HTTPException(status_code=400, detail="Enter valid email")
-    if email.find("@") < 4:
-        raise HTTPException(status_code=400, detail="Enter valid email")
-    if email in [i.email for i in db.query(User).all()]:
-        raise HTTPException(status_code=400, detail="Email already used")
-
-
 async def password_hash(password: str) -> str:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     return pwd_context.hash(password)
@@ -87,7 +72,7 @@ def check_email_with_password(email: str, password: str, db: SessionLocal) -> No
     raise HTTPException(status_code=401, detail="Bad username or password")
 
 
-def paginator(page, size, db, convert_to_private_users=False):
+async def paginator(page, size, db, convert_to_private_users=False):
     page -= 1
     query_users = db.query(User).all()
     city = db.query(City)
