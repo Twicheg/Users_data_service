@@ -1,15 +1,17 @@
 from datetime import datetime
-from typing import Union, Any
-from fastapi import Response, HTTPException, Depends
+from fastapi import HTTPException
 from pydantic import BaseModel, validator, root_validator
-from typing_extensions import Annotated
-from service.database import SessionLocal
 from service.models import User
-from service.services import get_db, get_arg
+from service.services import get_db
 from passlib.context import CryptContext
 
 
-class CurrentUserResponseModel(BaseModel):
+class MyBaseModel(BaseModel):
+    class Config:
+        orm_mode = True
+
+
+class CurrentUserResponseModel(MyBaseModel):
     first_name: str
     last_name: str
     other_name: str | None
@@ -24,7 +26,7 @@ class CurrentUserResponseModel(BaseModel):
         orm_mode = True
 
 
-class PrivateCreateUserModel(BaseModel):
+class PrivateCreateUserModel(MyBaseModel):
     first_name: str
     last_name: str
     email: str
@@ -50,11 +52,8 @@ class PrivateCreateUserModel(BaseModel):
             raise HTTPException(status_code=400, detail="Enter valid password")
         return password
 
-    class Config:
-        orm_mode = True
 
-
-class PrivateDetailUserResponseModel(BaseModel):
+class PrivateDetailUserResponseModel(MyBaseModel):
     id: int
     first_name: str
     last_name: str
@@ -66,48 +65,42 @@ class PrivateDetailUserResponseModel(BaseModel):
     additional_info: str | None
     is_admin: bool
 
-    class Config:
-        orm_mode = True
 
-
-class UsersListResponseModel(BaseModel):
+class UsersListResponseModel(MyBaseModel):
     id: int
     first_name: str
     last_name: str
     email: str
 
 
-class PaginatedMetaDataModel(BaseModel):
+class PaginatedMetaDataModel(MyBaseModel):
     total: int
     page: int
     size: int
 
 
-class CitiesHintModel(BaseModel):
+class CitiesHintModel(MyBaseModel):
     id: int | None
     name: str | None
 
 
-class PrivateUsersListHintMetaModel(BaseModel):
+class PrivateUsersListHintMetaModel(MyBaseModel):
     city: CitiesHintModel
 
 
-class PrivateUsersListMetaDataModel(BaseModel):
+class PrivateUsersListMetaDataModel(MyBaseModel):
     pagination: PaginatedMetaDataModel
     hint: PrivateUsersListHintMetaModel
 
 
-class UsersListElementModel(BaseModel):
+class UsersListElementModel(MyBaseModel):
     id: int
     first_name: str
     last_name: str
     email: str
 
-    class Config:
-        orm_mode = True
 
-
-class PrivateUsersListResponseModel(BaseModel):
+class PrivateUsersListResponseModel(MyBaseModel):
     data: UsersListElementModel
     meta: PrivateUsersListMetaDataModel
 
@@ -115,11 +108,7 @@ class PrivateUsersListResponseModel(BaseModel):
         orm_mode = False
 
 
-class UserUpdate(BaseModel):
-    pass
-
-
-class LoginModel(BaseModel):
+class LoginModel(MyBaseModel):
     email: str
     password: str
 
@@ -132,10 +121,28 @@ class LoginModel(BaseModel):
         raise HTTPException(status_code=401, detail="Bad username or password")
 
 
-class ErrorResponseModel(BaseModel):
+class ErrorResponseModel(MyBaseModel):
     code: int = 400
     message: str
 
 
-class CodelessErrorResponseModel(BaseModel):
+class UserUpdate(MyBaseModel):
+    first_name: str
+    last_name: str
+    other_name: str
+    email: str
+    phone: str
+    birthday: datetime | None
+
+
+class UpdateUserResponseModel(MyBaseModel):
+    first_name: str
+    last_name: str
+    other_name: str
+    email: str
+    phone: str
+    birthday: datetime
+
+
+class CodelessErrorResponseModel(MyBaseModel):
     message: str

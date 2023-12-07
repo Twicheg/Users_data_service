@@ -1,16 +1,13 @@
 import os
 from datetime import datetime, timedelta, time
-from typing import Any, Dict, List, Optional, Union, cast, Annotated
-from service.manager import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from typing import Annotated
+from service.manager import OAuth2PasswordBearer
 from jose import jwt
-from fastapi.param_functions import Form
 from service.database import SessionLocal
-from fastapi import Response, HTTPException, FastAPI, Response, Depends, Header, Request
+from fastapi import HTTPException, Response, Depends
 from passlib.context import CryptContext
 from service.models import User, City
 from starlette.requests import Request
-from fastapi.security.utils import get_authorization_scheme_param
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")

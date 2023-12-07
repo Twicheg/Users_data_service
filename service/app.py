@@ -1,15 +1,13 @@
 from typing import Any
-# from fastapi.exceptions import HTTPException, RequestErrorModel
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from typing_extensions import Annotated
-from fastapi import FastAPI, Response, Depends, Header, Request, HTTPException, Path, Query
+from fastapi import FastAPI, Response, Depends, Query
 from service.database import SessionLocal
 from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserResponseModel, \
     PrivateDetailUserResponseModel, ErrorResponseModel, \
     CodelessErrorResponseModel, UsersListResponseModel, PrivateUsersListResponseModel, CitiesHintModel, \
-    UsersListElementModel
+    UserUpdate, UpdateUserResponseModel
 from service.services import get_db, password_hash, \
-    token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user, paginator
+    token_generator, get_current_user, get_arg, get_user, paginator
 from fastapi.responses import JSONResponse, RedirectResponse
 from service.models import User, City
 
@@ -53,9 +51,23 @@ async def current_user(commons: Annotated[Any, Depends(get_arg)]):
 
 
 @app.patch("/users/current",
-           tags=['user'])
-async def edit_user(commons: Annotated[Any, Depends(get_arg)]):
-    pass
+           response_model=UpdateUserResponseModel,
+           responses={
+               400: {"model": ErrorResponseModel, "description": "Bad Request"},
+               401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
+               403: {"model": CodelessErrorResponseModel, "description": "Forbidden"}, },
+           tags=['user']
+           )
+async def edit_user(value: UserUpdate, commons: Annotated[Any, Depends(get_arg)]):
+    db = commons.get("db")
+    user = get_current_user(commons.get("current_user_email"), db)
+    for i in value.dict():
+        if value.dict().get(i) is None:
+            continue
+        setattr(user, i, value.dict().get(i))
+    else:
+        db.commit()
+    return user
 
 
 @app.get("/users",
@@ -130,10 +142,24 @@ async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)]
 
 
 @app.patch("/private/users/{pk}",
+           response_model=UpdateUserResponseModel,
+           responses={
+               400: {"model": ErrorResponseModel, "description": "Bad Request"},
+               401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
+               403: {"model": CodelessErrorResponseModel, "description": "Forbidden"}, },
            tags=['admin']
            )
-async def private_patch_user(pk: int, changes):
-    pass
+async def private_patch_user(pk: int, value: UserUpdate, commons: Annotated[Any, Depends(get_arg)]):
+    db = commons.get("db")
+    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    user = db.get.query(User).get(pk)
+    for i in value.dict():
+        if value.dict().get(i) is None:
+            continue
+        setattr(user, i, value.dict().get(i))
+    else:
+        db.commit()
+    return user
 
 
 @app.post("/city")
