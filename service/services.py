@@ -20,12 +20,9 @@ my_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Token")
 
 def token_generator(email: str, password: str) -> str:
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    data = {"sub": email, "pas": password}
     expire = datetime.utcnow().replace(tzinfo=None) + access_token_expires
-    to_encode = data.copy()
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    data = {"sub": email, "pas": password, "exp": expire}
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def get_db() -> SessionLocal:
@@ -62,14 +59,6 @@ def get_user(user_id: int, db: SessionLocal) -> User:
 async def password_hash(password: str) -> str:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     return pwd_context.hash(password)
-
-
-def check_email_with_password(email: str, password: str, db: SessionLocal) -> None:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    for i in db.query(User).all():
-        if email == i.email and pwd_context.verify(password, i.hashed_password):
-            return 0
-    raise HTTPException(status_code=401, detail="Bad username or password")
 
 
 async def paginator(page, size, db, convert_to_private_users=False):

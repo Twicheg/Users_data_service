@@ -8,7 +8,7 @@ from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserRespo
     PrivateDetailUserResponseModel, ErrorResponseModel, \
     CodelessErrorResponseModel, UsersListResponseModel, PrivateUsersListResponseModel, CitiesHintModel, \
     UsersListElementModel
-from service.services import get_db, password_hash, check_email_with_password, \
+from service.services import get_db, password_hash, \
     token_generator, get_current_user, get_arg, my_oauth2_scheme, get_user, paginator
 from fastapi.responses import JSONResponse, RedirectResponse
 from service.models import User, City
@@ -24,7 +24,6 @@ app = FastAPI()
 async def login(response: Response, user: LoginModel, db: SessionLocal = Depends(get_db)):
     email = user.email
     password = user.password
-    check_email_with_password(email, password, db)
     response.set_cookie(key="Bearer",
                         value=f"{token_generator(email, password)}",
                         httponly=True)
@@ -70,7 +69,7 @@ async def edit_user(commons: Annotated[Any, Depends(get_arg)]):
 async def users(commons: Annotated[Any, Depends(get_arg)],
                 page: int = Query(ge=1, default=1, title="Page"),
                 size: int = Query(ge=1, le=100, title="Size")):
-    query = paginator(page, size, commons.get("db"))
+    query = await paginator(page, size, commons.get("db"))
     return query
 
 
@@ -103,11 +102,11 @@ async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[A
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
     user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
+    response.status_code = 201
     user = User(**user_dict)
     db.add(user)
     db.commit()
     user = db.query(User).filter(User.email == user_dict.get("email")).first()
-    response.status_code = 201
     return user
 
 

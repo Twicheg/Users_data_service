@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 from service.database import SessionLocal
 from service.models import User
 from service.services import get_db, get_arg
+from passlib.context import CryptContext
 
 
 class CurrentUserResponseModel(BaseModel):
@@ -121,6 +122,14 @@ class UserUpdate(BaseModel):
 class LoginModel(BaseModel):
     email: str
     password: str
+
+    @root_validator(skip_on_failure=True)
+    def check_email_with_password(cls, value) -> None:
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        for i in next(get_db()).query(User).all():
+            if value.get("email") == i.email and pwd_context.verify(value.get("password"), i.hashed_password):
+                return value
+        raise HTTPException(status_code=401, detail="Bad username or password")
 
 
 class ErrorResponseModel(BaseModel):
