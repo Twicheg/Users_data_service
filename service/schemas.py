@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Union
+from typing import Union, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class CurrentUserResponseModel(BaseModel):
@@ -52,28 +52,19 @@ class UsersListResponseModel(BaseModel):
     email: str
 
 
-class UsersListElementModel(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    email: str
-
-
 class PaginatedMetaDataModel(BaseModel):
     total: int
     page: int
     size: int
 
 
-#
-
 class CitiesHintModel(BaseModel):
-    name: str
+    id: int | None
+    name: str | None
 
 
 class PrivateUsersListHintMetaModel(BaseModel):
-    pass
-    # city: CitiesHintModel
+    city: CitiesHintModel
 
 
 class PrivateUsersListMetaDataModel(BaseModel):
@@ -81,9 +72,22 @@ class PrivateUsersListMetaDataModel(BaseModel):
     hint: PrivateUsersListHintMetaModel
 
 
+class UsersListElementModel(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+
+    class Config:
+        orm_mode = True
+
+
 class PrivateUsersListResponseModel(BaseModel):
-    # data: {UsersListElementModel}
+    data: UsersListElementModel
     meta: PrivateUsersListMetaDataModel
+
+    class Config:
+        orm_mode = False
 
 
 class UserUpdate(BaseModel):

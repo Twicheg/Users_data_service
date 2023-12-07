@@ -87,8 +87,15 @@ def check_email_with_password(email: str, password: str, db: SessionLocal) -> No
     raise HTTPException(status_code=401, detail="Bad username or password")
 
 
-def paginator(page, size, db):
+def paginator(page, size, db, convert_to_private_users=False):
     page -= 1
-    query = db.query(User).all()
-    list_to_return = [i for i in query[page * size:page * size + size]]
+    query_users = db.query(User).all()
+    city = db.query(City)
+    list_to_return = [i for i in query_users[page * size:page * size + size]]
+    if convert_to_private_users:
+        total = len(query_users)
+        for i in list_to_return:
+            i.data = {"id": i.id, "first_name": i.first_name, "last_name": i.last_name, "email": i.email}
+            i.meta = {"pagination": {"total": total, "page": page + 1, "size": size},
+                      "hint": {"city": {"id": i.city, "name": city.get(i.city).name if city.get(i.city) else None}}}
     return list_to_return
