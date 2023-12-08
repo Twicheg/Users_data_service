@@ -1,52 +1,112 @@
 from fastapi.testclient import TestClient
 from service.app import app
-from fastapi import FastAPI, Response , Cookie
 from service.services import token_generator
 
+email = "AlexMurphy@mail.com"
+password = "12345"
 client = TestClient(app)
-
+client.cookies = {"Bearer": token_generator(email, password)}
+user_id = 0
+name = "Alex"
+last_name = "Murphy"
 
 
 def test_create():
-    head = {"Cookie": "Bearer=" + token_generator("AlexMurphy@mail.com", "12345")}
-    # client.headers=z
-    client.cookies=head
-    #print(client.headers,client.cookies)
-    response = client.post("/private/users", json={
-        "first_name": "Alex",
-        "last_name": "Murphy",
-        "is_admin": True,
-        "email": "AlexM@mail.com",
-        "password": "12345",
-        "city": 1
-    },)
-    #print(z,client.cookies)
-    assert response.status_code == 201
-    # assert response.json() == {
-    #     "id": 1,
-    #     "first_name": "Alex",
-    #     "last_name": "Murphy",
-    #     "other_name": None,
-    #     "email": "Alex@mail.com",
-    #     "phone": None,
-    #     "birthday": None,
-    #     "city": 1,
-    #     "additional_info": None,
-    #     "is_admin": None
-    # }
+    global user_id
 
-# def test_login():
-#     global JWT
-#     response = client.post('/login/', json={"email": "12345@mail.com", "password": "12345"})
-#     assert response.json() == {
-#         "first_name": "zzz",
-#         "last_name": "zz",
-#         "other_name": "AAAA",
-#         "email": "12345@mail.com",
-#         "phone": "1333-555",
-#         "birthday": "2023-12-07T14:09:45",
-#         "is_admin": True,
-#         "city": None,
-#         "additional_info": None
-#     }
+    response = client.post("/private/users", json={
+        "first_name": name,
+        "last_name": last_name,
+        "is_admin": True,
+        "email": email,
+        "password": password,
+        "city": 1
+    }, cookies=client.cookies)
+    assert response.status_code == 201
+
+    user_id = response.json().get("id")
+
+    assert response.json() == {
+        "id": user_id,
+        "first_name": name,
+        "last_name": last_name,
+        "other_name": None,
+        "email": email,
+        "phone": None,
+        "birthday": None,
+        "city": 1,
+        "additional_info": None,
+        "is_admin": True
+    }
+
+
+def test_login():
+    response = client.post('/login/', json={"email": email,
+                                            "password": password})
+    assert response.status_code == 200
+    assert response.json() == {
+        "first_name": name,
+        "last_name": last_name,
+        "other_name": None,
+        "email": email,
+        "phone": None,
+        "birthday": None,
+        "is_admin": True,
+        "city": 1,
+        "additional_info": None
+    }
+
+
+def test_current_user():
+    response = client.get("/users/current/", cookies=client.cookies)
+    assert response.status_code == 200
+    print(response.json())
+    assert response.json() == {
+        "first_name": name,
+        "last_name": last_name,
+        "other_name": None,
+        "email": email,
+        "phone": None,
+        "birthday": None,
+        "is_admin": True,
+        "city": 1,
+        "additional_info": None
+    }
+
+
+def test_patch_current_user():
+    response = client.patch("/users/current/", cookies=client.cookies, json={
+        "first_name": None,
+        "last_name": None,
+        "other_name": "Robo",
+        "email": None,
+        "phone": "911",
+        "birthday": "1987-01-01T00:00:01"
+    })
+    assert response.status_code == 200
+    assert response.json().get("phone") == "911"
+    assert response.json().get("other_name") == "Robo"
+    assert response.json().get("birthday") == "1987-01-01T00:00:01"
+
+
+# def test_users_get():
+#     # page = 1
+#     # size = 2
+#     response = client.patch(f"/users/",
+#                             params={"page": 1,
+#                                     "size": 2},
+#                             cookies=client.cookies)
 #     assert response.status_code == 200
+#     assert type(response.json()) == list
+
+
+def test_logout():
+    response = client.get("/logout", cookies=client.cookies)
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Successfully logout"}
+
+
+def test_delete():
+    response = client.delete(f"/private/users/{user_id}")
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Successfully delete"}

@@ -6,12 +6,7 @@ from service.services import get_db
 from passlib.context import CryptContext
 
 
-class MyBaseModel(BaseModel):
-    class Config:
-        from_attributes = True
-
-
-class CurrentUserResponseModel(MyBaseModel):
+class CurrentUserResponseModel(BaseModel):
     first_name: str
     last_name: str
     other_name: str | None
@@ -23,7 +18,7 @@ class CurrentUserResponseModel(MyBaseModel):
     additional_info: str | None
 
 
-class PrivateCreateUserModel(MyBaseModel):
+class PrivateCreateUserModel(BaseModel):
     first_name: str
     last_name: str
     email: str
@@ -50,7 +45,7 @@ class PrivateCreateUserModel(MyBaseModel):
         return password
 
 
-class PrivateDetailUserResponseModel(MyBaseModel):
+class PrivateDetailUserResponseModel(BaseModel):
     id: int
     first_name: str
     last_name: str
@@ -63,46 +58,46 @@ class PrivateDetailUserResponseModel(MyBaseModel):
     is_admin: bool
 
 
-class UsersListResponseModel(MyBaseModel):
+class UsersListResponseModel(BaseModel):
     id: int
     first_name: str
     last_name: str
     email: str
 
 
-class PaginatedMetaDataModel(MyBaseModel):
+class PaginatedMetaDataModel(BaseModel):
     total: int
     page: int
     size: int
 
 
-class CitiesHintModel(MyBaseModel):
+class CitiesHintModel(BaseModel):
     id: int | None
     name: str | None
 
 
-class PrivateUsersListHintMetaModel(MyBaseModel):
+class PrivateUsersListHintMetaModel(BaseModel):
     city: CitiesHintModel
 
 
-class PrivateUsersListMetaDataModel(MyBaseModel):
+class PrivateUsersListMetaDataModel(BaseModel):
     pagination: PaginatedMetaDataModel
     hint: PrivateUsersListHintMetaModel
 
 
-class UsersListElementModel(MyBaseModel):
+class UsersListElementModel(BaseModel):
     id: int
     first_name: str
     last_name: str
     email: str
 
 
-class PrivateUsersListResponseModel(MyBaseModel):
+class PrivateUsersListResponseModel(BaseModel):
     data: UsersListElementModel
     meta: PrivateUsersListMetaDataModel
 
 
-class LoginModel(MyBaseModel):
+class LoginModel(BaseModel):
     email: str
     password: str
 
@@ -115,21 +110,21 @@ class LoginModel(MyBaseModel):
         raise HTTPException(status_code=401, detail="Bad username or password")
 
 
-class ErrorResponseModel(MyBaseModel):
+class ErrorResponseModel(BaseModel):
     code: int = 400
     message: str
 
 
-class UserUpdate(MyBaseModel):
-    first_name: str
-    last_name: str
-    other_name: str
-    email: str
-    phone: str | None = None
-    birthday: datetime | None = None
+class UserUpdate(BaseModel):
+    first_name: str | None
+    last_name: str | None
+    other_name: str | None
+    email: str | None
+    phone: str | None
+    birthday: datetime | None
 
 
-class UpdateUserResponseModel(MyBaseModel):
+class UpdateUserResponseModel(BaseModel):
     first_name: str
     last_name: str
     other_name: str
@@ -138,5 +133,5 @@ class UpdateUserResponseModel(MyBaseModel):
     birthday: datetime
 
 
-class CodelessErrorResponseModel(MyBaseModel):
+class CodelessErrorResponseModel(BaseModel):
     message: str

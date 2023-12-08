@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, time
+import datetime as dt
 from typing import Annotated
 from service.manager import MyOAuth2PasswordBearer
 from jose import jwt
@@ -16,8 +16,8 @@ my_oauth2_scheme = MyOAuth2PasswordBearer(tokenUrl="Token")
 
 
 def token_generator(email: str, password: str) -> str:
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.utcnow().replace(tzinfo=None) + access_token_expires
+    access_token_expires = dt.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = dt.datetime.now(dt.UTC).replace(tzinfo=None) + access_token_expires
     data = {"sub": email, "pas": password, "exp": expire}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -41,13 +41,14 @@ def get_arg(response: Response = None, request: Request = None, db: SessionLocal
 
 def get_current_user(user_email: str, db: SessionLocal, check_perm: bool = False) -> User:
     user = db.query(User).filter(User.email == user_email).first()
+    print(user, user_email)
     if check_perm and not user.is_admin:
         raise HTTPException(status_code=403, detail="Forbidden")
     return user
 
 
 def get_user(user_id: int, db: SessionLocal) -> User:
-    user = db.query(User).get(user_id)
+    user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Not found")
     return user
@@ -69,11 +70,11 @@ async def paginator(page: int, size: int, db: SessionLocal, convert_to_private_u
         total = len(query_users)
         for user in query_return:
             if user.city:
-                city = db.query(City).get(user.city)
+                city = db.get(City, user.city)
             else:
                 city = None
             city = city if city else None
             user.data = {"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "email": user.email}
             user.meta = {"pagination": {"total": total, "page": page + 1, "size": size},
-                         "hint": {"city": {"id": user.city, "name": city}}}
+                         "hint": {"city": {"id": user.city, "name": city.name}}}
     return query_return

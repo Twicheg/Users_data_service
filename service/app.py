@@ -61,10 +61,10 @@ async def current_user(commons: Annotated[Any, Depends(get_arg)]):
 async def edit_user(value: UserUpdate, commons: Annotated[Any, Depends(get_arg)]):
     db = commons.get("db")
     user = get_current_user(commons.get("current_user_email"), db)
-    for i in value.dict():
-        if value.dict().get(i) is None:
+    for i in value.model_dump():
+        if value.model_dump().get(i) is None:
             continue
-        setattr(user, i, value.dict().get(i))
+        setattr(user, i, value.model_dump().get(i))
     else:
         db.commit()
     return user
@@ -109,9 +109,9 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
               401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
               403: {"model": CodelessErrorResponseModel, "description": "Forbidden"}, })
 async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[Any, Depends(get_arg)]):
-    user_dict = user.dict()
+    user_dict = user.model_dump()
     db = commons.get("db")
-    #get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    get_current_user(commons.get("current_user_email"), db, check_perm=True)
     user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
     response.status_code = 201
@@ -153,10 +153,10 @@ async def private_patch_user(pk: int, value: UserUpdate, commons: Annotated[Any,
     db = commons.get("db")
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
     user = db.get.query(User).get(pk)
-    for i in value.dict():
-        if value.dict().get(i) is None:
+    for i in value.model_dump():
+        if value.model_dump().get(i) is None:
             continue
-        setattr(user, i, value.dict().get(i))
+        setattr(user, i, value.model_dump().get(i))
     else:
         db.commit()
     return user
@@ -164,6 +164,6 @@ async def private_patch_user(pk: int, value: UserUpdate, commons: Annotated[Any,
 
 @app.post("/city")
 async def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db)):
-    city = City(**city.dict())
+    city = City(**city.model_dump())
     db.add(city)
     db.commit()
