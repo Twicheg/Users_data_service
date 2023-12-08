@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta, time
 from typing import Annotated
-from service.manager import OAuth2PasswordBearer
+from service.manager import MyOAuth2PasswordBearer
 from jose import jwt
 from service.database import SessionLocal
 from fastapi import HTTPException, Response, Depends
@@ -12,7 +12,7 @@ from starlette.requests import Request
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES"))
-my_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="Token")
+my_oauth2_scheme = MyOAuth2PasswordBearer(tokenUrl="Token")
 
 
 def token_generator(email: str, password: str) -> str:
