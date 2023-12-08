@@ -37,7 +37,7 @@ async def logout(commons: Annotated[Any, Depends(get_arg)]):
     return {"msg": "Successfully logout"}
 
 
-@app.get("/users/current",
+@app.get("/users/current/",
          tags=['user'],
          response_model=CurrentUserResponseModel,
          responses={
@@ -50,7 +50,7 @@ async def current_user(commons: Annotated[Any, Depends(get_arg)]):
     return user_from_db
 
 
-@app.patch("/users/current",
+@app.patch("/users/current/",
            response_model=UpdateUserResponseModel,
            responses={
                400: {"model": ErrorResponseModel, "description": "Bad Request"},
@@ -70,7 +70,7 @@ async def edit_user(value: UserUpdate, commons: Annotated[Any, Depends(get_arg)]
     return user
 
 
-@app.get("/users",
+@app.get("/users/",
          tags=['user'],
          response_model=list[UsersListResponseModel],
          responses={
@@ -79,13 +79,13 @@ async def edit_user(value: UserUpdate, commons: Annotated[Any, Depends(get_arg)]
          }
          )
 async def users(commons: Annotated[Any, Depends(get_arg)],
-                page: int = Query(ge=1, default=1, title="Page"),
+                page: int = Query(ge=1, default=10, title="Page"),
                 size: int = Query(ge=1, le=100, title="Size")):
     query = await paginator(page, size, commons.get("db"))
     return query
 
 
-@app.get("/private/users",
+@app.get("/private/users/",
          tags=['admin'],
          response_model=list[PrivateUsersListResponseModel],
          responses={
@@ -100,7 +100,7 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
     return query
 
 
-@app.post("/private/users",
+@app.post("/private/users/",
 
           tags=['admin'],
           response_model=PrivateDetailUserResponseModel,
@@ -111,7 +111,7 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
 async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[Any, Depends(get_arg)]):
     user_dict = user.dict()
     db = commons.get("db")
-    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    #get_current_user(commons.get("current_user_email"), db, check_perm=True)
     user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
     response.status_code = 201
@@ -163,7 +163,7 @@ async def private_patch_user(pk: int, value: UserUpdate, commons: Annotated[Any,
 
 
 @app.post("/city")
-def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db)):
+async def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db)):
     city = City(**city.dict())
     db.add(city)
     db.commit()

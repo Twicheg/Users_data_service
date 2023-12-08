@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import HTTPException
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, field_validator, model_validator, Extra
 from service.models import User
 from service.services import get_db
 from passlib.context import CryptContext
@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 
 class MyBaseModel(BaseModel):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CurrentUserResponseModel(MyBaseModel):
@@ -22,9 +22,6 @@ class CurrentUserResponseModel(MyBaseModel):
     city: int | None
     additional_info: str | None
 
-    class Config:
-        orm_mode = True
-
 
 class PrivateCreateUserModel(MyBaseModel):
     first_name: str
@@ -34,7 +31,7 @@ class PrivateCreateUserModel(MyBaseModel):
     is_admin: bool
     city: int
 
-    @validator("email")
+    @field_validator("email")
     def first_name(cls, email):
         if len({"@", "."}.intersection(set(email))) < 2:
             raise HTTPException(status_code=400, detail="Enter valid email")
@@ -46,7 +43,7 @@ class PrivateCreateUserModel(MyBaseModel):
             raise HTTPException(status_code=400, detail="Email already used")
         return email
 
-    @validator("password")
+    @field_validator("password")
     def password(cls, password):
         if len(password) < 5:
             raise HTTPException(status_code=400, detail="Enter valid password")
@@ -104,15 +101,12 @@ class PrivateUsersListResponseModel(MyBaseModel):
     data: UsersListElementModel
     meta: PrivateUsersListMetaDataModel
 
-    class Config:
-        orm_mode = False
-
 
 class LoginModel(MyBaseModel):
     email: str
     password: str
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode="before")
     def check_email_with_password(cls, value) -> None:
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         for i in next(get_db()).query(User).all():

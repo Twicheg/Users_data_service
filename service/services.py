@@ -58,15 +58,22 @@ async def password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-async def paginator(page, size, db, convert_to_private_users=False):
+async def paginator(page: int, size: int, db: SessionLocal, convert_to_private_users: bool = False) -> list[User]:
     page -= 1
+    match page, size:
+        case i, j if i < 0 or j < 1:
+            raise HTTPException(status_code=400, detail="Bad request")
     query_users = db.query(User).all()
-    city = db.query(City)
-    list_to_return = [i for i in query_users[page * size:page * size + size]]
+    query_return = [i for i in query_users[page * size:page * size + size]]
     if convert_to_private_users:
         total = len(query_users)
-        for i in list_to_return:
-            i.data = {"id": i.id, "first_name": i.first_name, "last_name": i.last_name, "email": i.email}
-            i.meta = {"pagination": {"total": total, "page": page + 1, "size": size},
-                      "hint": {"city": {"id": i.city, "name": city.get(i.city).name if city.get(i.city) else None}}}
-    return list_to_return
+        for user in query_return:
+            if user.city:
+                city = db.query(City).get(user.city)
+            else:
+                city = None
+            city = city if city else None
+            user.data = {"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "email": user.email}
+            user.meta = {"pagination": {"total": total, "page": page + 1, "size": size},
+                         "hint": {"city": {"id": user.city, "name": city}}}
+    return query_return

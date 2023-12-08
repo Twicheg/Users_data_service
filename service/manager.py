@@ -12,6 +12,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 # TODO: import from typing when deprecating Python 3.9
 from typing_extensions import Annotated, Doc  # type: ignore [attr-defined]
 
+
 # Переработка oauth2.py для работы с Cookie файлами !
 
 class OAuth2PasswordRequestForm:
@@ -262,8 +263,6 @@ class OAuth2(SecurityBase):
 
     async def __call__(self, request: Request) -> Optional[str]:
         authorization = request.headers.get("Cookie")
-        if authorization:
-            authorization = authorization.replace('=', ' ')
         if not authorization:
             if self.auto_error:
                 raise HTTPException(
@@ -350,6 +349,7 @@ class OAuth2PasswordBearer(OAuth2):
         )
 
     async def __call__(self, request: Request) -> Optional[str]:
+        print(request.cookies,request.headers.get("Cookie"))
         authorization = request.headers.get("Cookie")
         if authorization:
             authorization = authorization.replace('=', ' ')
@@ -357,13 +357,12 @@ class OAuth2PasswordBearer(OAuth2):
         if not authorization or scheme.lower() != "bearer":
             if self.auto_error:
                 raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED,
+                    status_code=401,
                     detail="Not authenticated",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
             else:
                 return None
-
         return param
 
 
@@ -459,9 +458,7 @@ class OAuth2AuthorizationCodeBearer(OAuth2):
         )
 
     async def __call__(self, request: Request) -> Optional[str]:
-        authorization = request.headers.get("Cookie")
-        if authorization:
-            authorization = authorization.replace('=', ' ')
+        authorization = request.headers.get("Authorization")
         scheme, param = get_authorization_scheme_param(authorization)
         if not authorization or scheme.lower() != "bearer":
             if self.auto_error:

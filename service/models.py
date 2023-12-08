@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy.orm
 
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 
 
 class City(Base):
