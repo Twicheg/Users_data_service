@@ -24,7 +24,7 @@ class User(Base):
     )
     phone = Column(String, nullable=True)
     birthday = Column(DateTime, nullable=True)
-    city = Column(Integer, ForeignKey(City.id, ondelete="cascade"))
+    city = Column(Integer, ForeignKey(City.id, ondelete="CASCADE"))
     additional_info = Column(Text, nullable=True)
     is_admin = Column(Boolean, nullable=False)
     hashed_password: Mapped[str] = mapped_column(

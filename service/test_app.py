@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from service.app import app
 from service.services import token_generator
 
-email = "Alex________Murphy@mail.com"
+email = "Alex_Murphy@mail.com"
 password = "12345"
 client = TestClient(app)
 client.cookies = {"Bearer": token_generator(email, password)}
@@ -13,7 +13,7 @@ city_id = 0
 
 
 def test_create_city_for_tests():
-    response = client.post("/city", json={"id": 11119999, "name": "London"})
+    response = client.post("/city", json={"id": 9999, "name": "London"})
     assert response.status_code == 201
     global city_id
     city_id = response.json().get("id")

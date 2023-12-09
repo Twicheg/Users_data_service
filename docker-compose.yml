@@ -19,7 +19,7 @@ services:
   user_service:
     image: user_service
     tty: true
-    command: bash -c "alembic revision --autogenerate -m  "docker" && alembic upgrade head && uvicorn service.app:app --host 0.0.0.0 --reload"
+    command: bash -c "alembic upgrade head && python main.py"
     ports:
       - "8000:8000"
     volumes:

@@ -9,6 +9,7 @@ from service.schemas import LoginModel, PrivateCreateUserModel, CurrentUserRespo
 from service.services import get_db, password_hash, \
     token_generator, get_current_user, get_arg, get_user, paginator
 from service.models import User, City
+from fastapi import HTTPException
 
 app = FastAPI()
 
@@ -123,7 +124,7 @@ async def private_create_user(user: PrivateCreateUserModel,
     db = commons.get("db")
     if not cheat_for_test == 777:
         get_current_user(commons.get("current_user_email"), db, check_perm=True)
-    user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
+    user_dict['hashed_password'] = password_hash(user_dict.pop('password'))
     user = User(**user_dict)
     db.add(user)
     db.commit()
@@ -155,13 +156,12 @@ async def private_get_user(pk: int, commons: Annotated[Any, Depends(get_arg)]):
                 401: {"model": CodelessErrorResponseModel, "description": "Unauthorized"},
                 403: {"model": CodelessErrorResponseModel, "description": "Forbidden"}, },
             tags=['admin'])
-async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)],):
+async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)], ):
     db = commons.get("db")
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
     db.delete(get_user(pk, db))
     db.commit()
-    return {"msg": "Successfully delete"}
-
+    return get_current_user(commons.get("current_user_email"), db, check_perm=True)
 
 @app.patch("/private/users/{pk}",
            response_model=PrivateDetailUserResponseModel,
@@ -196,5 +196,7 @@ async def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db))
 @app.delete("/city/{pk}", status_code=204)
 async def delete_city(pk: int, db: SessionLocal = Depends(get_db)):
     city = db.get(City, pk)
+    if not city:
+        raise HTTPException(status_code=404, detail="Not found")
     db.delete(city)
     db.commit()

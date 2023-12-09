@@ -1,7 +1,7 @@
-from datetime import datetime, date
+from datetime import date
 from fastapi import HTTPException
 from pydantic import BaseModel, field_validator, model_validator
-from service.models import User
+from service.models import User, City
 from service.services import get_db
 from passlib.context import CryptContext
 
@@ -31,7 +31,7 @@ class PrivateCreateUserModel(BaseModel):
     additional_info: str = "not specified"
 
     @field_validator("email")
-    def first_name(cls, email):
+    def check_first_name(cls, email):
         if len({"@", "."}.intersection(set(email))) < 2:
             raise HTTPException(status_code=400, detail="Enter valid email")
         if 'mail' not in email:
@@ -42,8 +42,14 @@ class PrivateCreateUserModel(BaseModel):
             raise HTTPException(status_code=400, detail="Email already used")
         return email
 
+    @field_validator("city")
+    def check_cities_name(cls, email):
+        if email not in [i.id for i in next(get_db()).query(City).all()]:
+            raise HTTPException(status_code=400, detail="Enter valid city")
+        return email
+
     @field_validator("password")
-    def password(cls, password):
+    def check_password(cls, password):
         if len(password) < 5:
             raise HTTPException(status_code=400, detail="Enter valid password")
         return password
