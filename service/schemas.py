@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import HTTPException
-from pydantic import BaseModel, field_validator, model_validator, Extra
+from pydantic import BaseModel, field_validator, model_validator
 from service.models import User
 from service.services import get_db
 from passlib.context import CryptContext

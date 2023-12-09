@@ -111,7 +111,7 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
 async def private_create_user(user: PrivateCreateUserModel, commons: Annotated[Any, Depends(get_arg)]):
     user_dict = user.model_dump()
     db = commons.get("db")
-    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    #get_current_user(commons.get("current_user_email"), db, check_perm=True)
     user_dict['hashed_password'] = await password_hash(user_dict.pop('password'))
     response = commons.get("response")
     response.status_code = 201

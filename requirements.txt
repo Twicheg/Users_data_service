@@ -13,9 +13,9 @@ dnspython==2.4.2
 ecdsa==0.18.0
 email-validator==2.0.0.post2
 fastapi==0.104.1
-fastapi-jwt-auth==0.5.0
-fastapi-users==12.1.2
-fastapi-users-db-sqlalchemy==6.0.1
+fastapi-jwt-auth
+fastapi-users
+fastapi-users-db-sqlalchemy
 flake8==6.1.0
 greenlet==3.0.1
 h11==0.14.0
@@ -38,7 +38,6 @@ pycparser==2.21
 pydantic==2.5.2
 pydantic_core==2.14.5
 pyflakes==3.1.0
-PyJWT==1.7.1
 pytest==7.4.3
 python-dotenv==1.0.0
 python-jose==3.3.0

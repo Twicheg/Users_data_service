@@ -21,7 +21,7 @@ def test_create():
         "email": email,
         "password": password,
         "city": 1
-    }, cookies=client.cookies)
+    },)
     assert response.status_code == 201
 
     user_id = response.json().get("id")
@@ -58,7 +58,7 @@ def test_login():
 
 
 def test_current_user():
-    response = client.get("/users/current/", cookies=client.cookies)
+    response = client.get("/users/current/",)
     assert response.status_code == 200
     print(response.json())
     assert response.json() == {
@@ -75,7 +75,7 @@ def test_current_user():
 
 
 def test_patch_current_user():
-    response = client.patch("/users/current/", cookies=client.cookies, json={
+    response = client.patch("/users/current/", json={
         "first_name": None,
         "last_name": None,
         "other_name": "Robo",
@@ -89,19 +89,19 @@ def test_patch_current_user():
     assert response.json().get("birthday") == "1987-01-01T00:00:01"
 
 
-# def test_users_get():
-#     # page = 1
-#     # size = 2
-#     response = client.patch(f"/users/",
-#                             params={"page": 1,
-#                                     "size": 2},
-#                             cookies=client.cookies)
-#     assert response.status_code == 200
-#     assert type(response.json()) == list
+def test_users_get():
+    page = 1
+    size = 2
+    response = client.get(f"/users/",
+                          params={"page": page,
+                                  "size": size}, )
+    assert response.status_code == 200
+    assert type(response.json()) == list
+    assert len(response.json()) == size
 
 
 def test_logout():
-    response = client.get("/logout", cookies=client.cookies)
+    response = client.get("/logout")
     assert response.status_code == 200
     assert response.json() == {"msg": "Successfully logout"}
 
@@ -110,3 +110,13 @@ def test_delete():
     response = client.delete(f"/private/users/{user_id}")
     assert response.status_code == 200
     assert response.json() == {"msg": "Successfully delete"}
+
+
+def test_authenticate():
+    page = 1
+    size = 2
+    client.cookies = None
+    response = client.get(f"/users/",
+                          params={"page": page,
+                                  "size": size})
+    assert response.status_code == 401
