@@ -1,6 +1,5 @@
 from typing import Optional
 from fastapi.exceptions import HTTPException
-from fastapi.security.utils import get_authorization_scheme_param
 from starlette.requests import Request
 from fastapi.security import OAuth2PasswordBearer
 

@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  postgresdb:
+  postgres:
     image: postgres
     restart: always
     ports:
@@ -19,13 +19,13 @@ services:
   user_service:
     image: user_service
     tty: true
-    command: bash -c "alembic upgrade head && uvicorn service.app:app --host 0.0.0.0 --reload"
+    command: bash -c "alembic revision --autogenerate -m  "docker" && alembic upgrade head && uvicorn service.app:app --host 0.0.0.0 --reload"
     ports:
       - "8000:8000"
     volumes:
       - .:/code
     depends_on:
-      postgresdb:
+      postgres:
         condition: service_healthy
     env_file:
       - .env

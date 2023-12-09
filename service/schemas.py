@@ -1,21 +1,21 @@
-from datetime import datetime
+from datetime import datetime, date
 from fastapi import HTTPException
 from pydantic import BaseModel, field_validator, model_validator
 from service.models import User
 from service.services import get_db
 from passlib.context import CryptContext
 
+from typing import Annotated
+
 
 class CurrentUserResponseModel(BaseModel):
     first_name: str
     last_name: str
-    other_name: str | None
+    other_name: str
     email: str
-    phone: str | None
-    birthday: datetime | None
+    phone: str
+    birthday: Annotated[date, str]
     is_admin: bool
-    city: int | None
-    additional_info: str | None
 
 
 class PrivateCreateUserModel(BaseModel):
@@ -24,7 +24,11 @@ class PrivateCreateUserModel(BaseModel):
     email: str
     password: str
     is_admin: bool
-    city: int
+    city: int = 1
+    other_name: str = "not specified"
+    phone: str = "not specified"
+    birthday: Annotated[date, str] = date.fromisoformat("2000-01-01")
+    additional_info: str = "not specified"
 
     @field_validator("email")
     def first_name(cls, email):
@@ -49,20 +53,13 @@ class PrivateDetailUserResponseModel(BaseModel):
     id: int
     first_name: str
     last_name: str
-    other_name: str | None
+    other_name: str
     email: str
-    phone: str | None
-    birthday: datetime | None
-    city: int | None
-    additional_info: str | None
+    phone: str
+    birthday: Annotated[date, str]
+    city: int
+    additional_info: str
     is_admin: bool
-
-
-class UsersListResponseModel(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    email: str
 
 
 class PaginatedMetaDataModel(BaseModel):
@@ -72,12 +69,12 @@ class PaginatedMetaDataModel(BaseModel):
 
 
 class CitiesHintModel(BaseModel):
-    id: int | None
-    name: str | None
+    id: int
+    name: str
 
 
 class PrivateUsersListHintMetaModel(BaseModel):
-    city: CitiesHintModel
+    city: list[CitiesHintModel]
 
 
 class PrivateUsersListMetaDataModel(BaseModel):
@@ -93,8 +90,8 @@ class UsersListElementModel(BaseModel):
 
 
 class PrivateUsersListResponseModel(BaseModel):
-    data: UsersListElementModel
     meta: PrivateUsersListMetaDataModel
+    data: list[UsersListElementModel]
 
 
 class LoginModel(BaseModel):
@@ -111,26 +108,68 @@ class LoginModel(BaseModel):
 
 
 class ErrorResponseModel(BaseModel):
-    code: int = 400
+    code: int
     message: str
 
 
-class UserUpdate(BaseModel):
-    first_name: str | None
-    last_name: str | None
-    other_name: str | None
-    email: str | None
-    phone: str | None
-    birthday: datetime | None
+class UpdateUserModel(BaseModel):
+    first_name: str = "not specified"
+    last_name: str = "not specified"
+    other_name: str = "not specified"
+    email: str = "not specified"
+    phone: str = "not specified"
+    birthday: Annotated[date, str] = date.fromisoformat("2000-01-01")
+
+    @field_validator("first_name", mode="before")
+    def check_first_name(cls, first_name):
+        print(first_name)
+        if len(first_name) < 3:
+            raise HTTPException(status_code=400, detail="Enter valid first name")
+        return first_name
+
+    @field_validator("email")
+    def check_email(cls, email):
+        if len({"@", "."}.intersection(set(email))) < 2:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if 'mail' not in email:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if email.find("@") < 4:
+            raise HTTPException(status_code=400, detail="Enter valid email")
+        if email in [i.email for i in next(get_db()).query(User).all()]:
+            raise HTTPException(status_code=400, detail="Email already used")
+        return email
+
+
+class UsersListMetaDataModel(BaseModel):
+    pagination: PaginatedMetaDataModel
+
+
+class UsersListResponseModel(BaseModel):
+    meta: UsersListMetaDataModel
+    data: list[UsersListElementModel]
+
+
+class PrivateUpdateUserModel(BaseModel):
+    id: int
+    first_name: str = None
+    last_name: str = None
+    other_name: str = None
+    email: str = None
+    phone: str = None
+    birthday: Annotated[date, str] = date.fromisoformat("2000-01-01")
+    city: int = None
+    additional_info: str = None
+    is_admin: bool = None
 
 
 class UpdateUserResponseModel(BaseModel):
+    id: int
     first_name: str
     last_name: str
     other_name: str
     email: str
     phone: str
-    birthday: datetime
+    birthday: Annotated[date, str]
 
 
 class CodelessErrorResponseModel(BaseModel):

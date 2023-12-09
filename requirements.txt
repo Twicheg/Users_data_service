@@ -14,8 +14,6 @@ ecdsa==0.18.0
 email-validator==2.0.0.post2
 fastapi==0.104.1
 fastapi-jwt-auth
-fastapi-users
-fastapi-users-db-sqlalchemy
 flake8==6.1.0
 greenlet==3.0.1
 h11==0.14.0
