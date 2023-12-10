@@ -59,7 +59,7 @@
 
 ### Веб-приложение находиться в папке _User_data_service/service_ , разбор по файлам:
 * database.py - конфигурация SQLAlchemy для подключения к базе данных.
-* manager.py - переопределение метода перегрузки операций call, класса OAuth2PasswordBearer модуля fastapi.security.
+* manager.py - переопределение метода перегрузки операций `__call__`, класса OAuth2PasswordBearer модуля fastapi.security.
 для поиска ключа в Cookie, и проверки аутентификации. 
 * models.py - создание моделей пользователей и городов.
 * schemas.py - схемы и валидация.
@@ -101,9 +101,9 @@ pytest --cov`
 ### .env Файл:
 * DB_USER  - пользователь СУБД , по умолчанию postgres
 * POSTGRES_PASSWORD - пароль , задаваемый пользователю и шаблону postgres для docker
-* POSTGRES_DB - имя бд , для локального использования и страндартная БД для шаблона docker
-* DB_SERVER - 127.0.0.1:5432 локальный и postgres:5432 для докера
-* JWT_SECRET_KEY - ключ шифрования для Json Web Toker , который упадет в cookie после логина
+* POSTGRES_DB - имя бд , для локального использования и стандартное имя БД для шаблона docker
+* DB_SERVER - 127.0.0.1:5432 локальный адрес и postgres:5432 для докера
+* JWT_SECRET_KEY - ключ шифрования Json Web Toker , который установится в cookie после логина
 * JWT_ALGORITHM - алгоритм шифрования (HS256)
 * JWT_ACCESS_TOKEN_EXPIRE_MINUTES - время жизни токена
 
