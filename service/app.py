@@ -10,8 +10,17 @@ from service.services import get_db, password_hash, \
     token_generator, get_current_user, get_arg, get_user, paginator
 from service.models import User, City
 from fastapi import HTTPException
+from fastapi.exceptions import ResponseValidationError
+from fastapi.responses import PlainTextResponse
 
 app = FastAPI()
+
+
+@app.exception_handler(ResponseValidationError)
+async def validation_exception_handler(response: Response, exc: ResponseValidationError):
+    return PlainTextResponse(
+        status_code=500,
+        content="Что-то пошло не так, мы уже исправляем эту ошибку")
 
 
 @app.post("/login",
