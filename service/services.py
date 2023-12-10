@@ -1,5 +1,6 @@
 import os
 import datetime as dt
+from copy import copy
 from typing import Annotated
 from service.manager import MyOAuth2PasswordBearer
 from jose import jwt
@@ -75,12 +76,11 @@ def paginator(page: int, size: int, db: SessionLocal,
     query_users = db.query(User).all()
     query_return = [i for i in query_users[page * size:page * size + size]]
     total = len(query_users)
-
+    object_to_return = {"meta": {"pagination": {"total": total,
+                                                "page": page + 1,
+                                                "size": size}},
+                        "data": []}
     if convert_to_ == "users":
-        object_to_return = {"meta": {"pagination": {"total": total,
-                                                    "page": page + 1,
-                                                    "size": size}},
-                            "data": []}
         for user in query_return:
             object_to_return["data"].append(
                 {"id": user.id, "first_name": user.first_name,
@@ -88,11 +88,7 @@ def paginator(page: int, size: int, db: SessionLocal,
         return object_to_return
 
     if convert_to_ == "private":
-        object_to_return = {"meta": {"pagination": {"total": total,
-                                                    "page": page + 1,
-                                                    "size": size},
-                                     "hint": {"city": []}},
-                            "data": []}
+        object_to_return['meta'].update({"hint": {"city": []}})
         for user in query_return:
             city = db.get(City, user.city)
             object_to_return["data"].append(
