@@ -158,10 +158,12 @@ async def private_get_user(pk: int, commons: Annotated[Any, Depends(get_arg)]):
             tags=['admin'])
 async def private_delete_user(pk: int, commons: Annotated[Any, Depends(get_arg)], ):
     db = commons.get("db")
-    get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    user = get_current_user(commons.get("current_user_email"), db, check_perm=True)
+    if user.email == commons.get("current_user_email"):
+        commons.get("response").delete_cookie(key="Bearer")
     db.delete(get_user(pk, db))
     db.commit()
-    return get_current_user(commons.get("current_user_email"), db, check_perm=True)
+
 
 @app.patch("/private/users/{pk}",
            response_model=PrivateDetailUserResponseModel,

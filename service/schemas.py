@@ -110,7 +110,7 @@ class LoginModel(BaseModel):
         for i in next(get_db()).query(User).all():
             if value.get("email") == i.email and pwd_context.verify(value.get("password"), i.hashed_password):
                 return value
-        raise HTTPException(status_code=401, detail="Bad username or password")
+        raise HTTPException(status_code=401, detail="Bad email or password")
 
 
 class ErrorResponseModel(BaseModel):

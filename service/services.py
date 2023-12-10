@@ -42,11 +42,10 @@ def get_arg(response: Response = None, request: Request = None, db: SessionLocal
     return {"response": response, "db": db, "request": request, "current_user_email": user_email}
 
 
-def get_current_user(user_email: str, db: SessionLocal, check_perm: bool = False, response=Response()) -> User:
+def get_current_user(user_email: str, db: SessionLocal, check_perm: bool = False,) -> User:
     try:
         user = db.query(User).filter(User.email == user_email).first()
     except Exception:
-        response.delete_cookie(key="Bearer")
         raise HTTPException(status_code=400, detail="please login")
     if check_perm and not user.is_admin:
         raise HTTPException(status_code=403, detail="Forbidden")
