@@ -39,7 +39,7 @@
 ### Инструкции для запуска
 варианты запуска:
 1. Запуск приложения через файл main.py
-2. Запуск приложения через docker-compose up
+2. Сделать билд `docker build . -t "user_service"` ,  запуск приложения через `docker-compose up`
 3. Запустить команду "alembic upgrade head" для применения миграций 
 (Alembic revision --autogenerate -m "create tables" для создания миграций).Запуск через команду uvicorn service.app:app --reload
 
