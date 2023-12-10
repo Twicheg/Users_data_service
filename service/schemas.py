@@ -9,6 +9,7 @@ from typing import Annotated
 
 
 class CurrentUserResponseModel(BaseModel):
+
     first_name: str
     last_name: str
     other_name: str

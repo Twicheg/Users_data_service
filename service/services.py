@@ -20,7 +20,8 @@ my_oauth2_scheme = MyOAuth2PasswordBearer(tokenUrl="Token")
 
 def token_generator(email: str, password: str) -> str:
     access_token_expires = dt.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = dt.datetime.now(dt.UTC).replace(tzinfo=None) + access_token_expires
+    expire = (dt.datetime.now(dt.UTC).replace(tzinfo=None) +
+              access_token_expires)
     data = {"sub": email, "pas": password, "exp": expire}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -33,16 +34,20 @@ def get_db() -> SessionLocal:
         db.close()
 
 
-def get_arg(response: Response = None, request: Request = None, db: SessionLocal = Depends(get_db),
+def get_arg(response: Response = None, request: Request = None,
+            db: SessionLocal = Depends(get_db),
             JWT: Annotated[str, Depends(my_oauth2_scheme)] = None) -> dict:
     try:
         user_email = jwt.decode(JWT, key=SECRET_KEY).get("sub")
     except Exception:
-        raise HTTPException(status_code=403, detail="Session over , please re-login")
-    return {"response": response, "db": db, "request": request, "current_user_email": user_email}
+        raise HTTPException(status_code=403,
+                            detail="Session over , please re-login")
+    return {"response": response, "db": db, "request": request,
+            "current_user_email": user_email}
 
 
-def get_current_user(user_email: str, db: SessionLocal, check_perm: bool = False,) -> User:
+def get_current_user(user_email: str, db: SessionLocal,
+                     check_perm: bool = False, ) -> User:
     try:
         user = db.query(User).filter(User.email == user_email).first()
     except Exception:
@@ -64,30 +69,35 @@ def password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def paginator(page: int, size: int, db: SessionLocal, convert_to_: str = "") -> dict:
+def paginator(page: int, size: int, db: SessionLocal,
+              convert_to_: str = "") -> dict:
     page -= 1
     query_users = db.query(User).all()
     query_return = [i for i in query_users[page * size:page * size + size]]
     total = len(query_users)
 
     if convert_to_ == "users":
-        object_to_return = {"meta": {"pagination": {"total": total, "page": page + 1, "size": size}},
+        object_to_return = {"meta": {"pagination": {"total": total,
+                                                    "page": page + 1,
+                                                    "size": size}},
                             "data": []}
         for user in query_return:
             object_to_return["data"].append(
-                {"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "email": user.email})
+                {"id": user.id, "first_name": user.first_name,
+                 "last_name": user.last_name, "email": user.email})
         return object_to_return
 
     if convert_to_ == "private":
-        object_to_return = {"meta": {"pagination": {"total": total, "page": page + 1, "size": size},
+        object_to_return = {"meta": {"pagination": {"total": total,
+                                                    "page": page + 1,
+                                                    "size": size},
                                      "hint": {"city": []}},
                             "data": []}
         for user in query_return:
             city = db.get(City, user.city)
-            # if not city:
-
             object_to_return["data"].append(
-                {"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "email": user.email})
+                {"id": user.id, "first_name": user.first_name,
+                 "last_name": user.last_name, "email": user.email})
             if {"id": user.city, "name": city.name} in object_to_return["meta"]["hint"]["city"]:
                 continue
             object_to_return["meta"]["hint"]["city"].append({"id": user.city, "name": city.name})
