@@ -44,10 +44,10 @@ class PrivateCreateUserModel(BaseModel):
         return email
 
     @field_validator("city")
-    def check_cities_name(cls, email):
-        if email not in [i.id for i in next(get_db()).query(City).all()]:
+    def check_cities_name(cls, city):
+        if city not in [i.id for i in next(get_db()).query(City).all()]:
             raise HTTPException(status_code=400, detail="Enter valid city")
-        return email
+        return city
 
     @field_validator("password")
     def check_password(cls, password):
