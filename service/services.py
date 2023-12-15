@@ -1,6 +1,5 @@
 import os
 import datetime as dt
-from copy import copy
 from typing import Annotated
 from service.manager import MyOAuth2PasswordBearer
 from jose import jwt

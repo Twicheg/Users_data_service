@@ -135,6 +135,7 @@ async def users(commons: Annotated[Any, Depends(get_arg)],
 async def private_users(commons: Annotated[Any, Depends(get_arg)],
                         page: int=Query(ge=1, title="Page"),
                         size: int=Query(ge=1, le=100, title="Size"), ):
+    get_current_user(commons.get("current_user_email"), commons.get("db"), check_perm=True)
     return paginator(page, size, commons.get("db"), convert_to_="private")
 
 
