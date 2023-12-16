@@ -231,6 +231,8 @@ async def private_patch_user(pk: int, value: PrivateUpdateUserModel,
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
     value.model_dump()["id"] = pk
     user = db.get(User, pk)
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
     for i in value.model_dump():
         if value.model_dump().get(i) is None:
             continue
