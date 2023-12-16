@@ -157,7 +157,7 @@ class UsersListResponseModel(BaseModel):
 
 
 class PrivateUpdateUserModel(BaseModel):
-    id: int
+    id: int = None
     first_name: str = None
     last_name: str = None
     other_name: str = None

@@ -33,7 +33,7 @@ async def validation_exception_handler(response: Response,
                            "description": "Bad Request"}}
           )
 async def login(response: Response, user: LoginModel,
-                db: SessionLocal=Depends(get_db)):
+                db: SessionLocal = Depends(get_db)):
     email = user.email
     password = user.password
     response.set_cookie(key="Bearer",
@@ -111,8 +111,8 @@ async def edit_user(value: UpdateUserModel,
          }
          )
 async def users(commons: Annotated[Any, Depends(get_arg)],
-                page: int=Query(ge=1, title="Page"),
-                size: int=Query(ge=1, le=100, title="Size")):
+                page: int = Query(ge=1, title="Page"),
+                size: int = Query(ge=1, le=100, title="Size")):
     return paginator(page, size, commons.get("db"), convert_to_="users")
 
 
@@ -133,8 +133,8 @@ async def users(commons: Annotated[Any, Depends(get_arg)],
          }
          )
 async def private_users(commons: Annotated[Any, Depends(get_arg)],
-                        page: int=Query(ge=1, title="Page"),
-                        size: int=Query(ge=1, le=100, title="Size"), ):
+                        page: int = Query(ge=1, title="Page"),
+                        size: int = Query(ge=1, le=100, title="Size"), ):
     get_current_user(commons.get("current_user_email"), commons.get("db"), check_perm=True)
     return paginator(page, size, commons.get("db"), convert_to_="private")
 
@@ -156,7 +156,7 @@ async def private_users(commons: Annotated[Any, Depends(get_arg)],
                     "description": "Forbidden"}, })
 async def private_create_user(user: PrivateCreateUserModel,
                               commons: Annotated[Any, Depends(get_arg)],
-                              cheat_for_test: int=0, ):
+                              cheat_for_test: int = 0, ):
     user_dict = user.model_dump()
     db = commons.get("db")
     if not cheat_for_test == 777:
@@ -229,7 +229,8 @@ async def private_patch_user(pk: int, value: PrivateUpdateUserModel,
                              commons: Annotated[Any, Depends(get_arg)]):
     db = commons.get("db")
     get_current_user(commons.get("current_user_email"), db, check_perm=True)
-    user = db.get.query(User).get(pk)
+    value.model_dump()["id"] = pk
+    user = db.get(User, pk)
     for i in value.model_dump():
         if value.model_dump().get(i) is None:
             continue
@@ -240,7 +241,7 @@ async def private_patch_user(pk: int, value: PrivateUpdateUserModel,
 
 
 @app.post("/city", status_code=201, response_model=CitiesHintModel)
-async def create_city(city: CitiesHintModel, db: SessionLocal=Depends(get_db)):
+async def create_city(city: CitiesHintModel, db: SessionLocal = Depends(get_db)):
     city = City(**city.model_dump())
     db.add(city)
     db.commit()
@@ -248,7 +249,7 @@ async def create_city(city: CitiesHintModel, db: SessionLocal=Depends(get_db)):
 
 
 @app.delete("/city/{pk}", status_code=204)
-async def delete_city(pk: int, db: SessionLocal=Depends(get_db)):
+async def delete_city(pk: int, db: SessionLocal = Depends(get_db)):
     city = db.get(City, pk)
     if not city:
         raise HTTPException(status_code=404, detail="Not found")
